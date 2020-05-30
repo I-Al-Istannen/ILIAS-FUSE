@@ -25,7 +25,7 @@ and copy the numerical ID after `ref_id` in the URL.
 
 ## Screenshots
 
-
+![It's alive](media/its_alive.png)
 
 
 ## Installation
