@@ -1,0 +1,13 @@
+diff --git a/setup.py b/setup.py
+index fa16c50..75d10b5 100755
+--- a/setup.py
++++ b/setup.py
+@@ -18,7 +18,7 @@ setup(
+     maintainer = 'Terence Honles',
+     maintainer_email = 'terence@honles.com',
+     license = 'ISC',
+-    py_modules=['fuse'],
++    py_modules=['fuse', 'fusell'],
+     url = 'http://github.com/fusepy/fusepy',
+ 
+     classifiers = [
