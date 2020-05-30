@@ -133,7 +133,9 @@ class IliasHttpFile(fusetree.GeneratorFile):
             st_mode=S_IFREG | self.mode,
             st_uid=pwd.getpwuid(os.getuid()).pw_uid,
             st_gid=pwd.getpwuid(os.getuid()).pw_gid,
-            st_mtime=self.info.modification_date.timestamp()
+            st_mtime=self.info.modification_date.timestamp(),
+            st_ctime=self.info.modification_date.timestamp(),
+            st_atime=self.info.modification_date.timestamp(),
         )
 
     def _process(self) -> Generator[bytes, None, None]:
