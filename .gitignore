@@ -1,0 +1,8 @@
+.vscode/
+.env/
+fusepy/
+fusetree/
+.mypy_cache/
+PFERD/
+
+cookies.txt
