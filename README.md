@@ -32,8 +32,9 @@ and copy the numerical ID after `ref_id` in the URL.
 
 1. Clone this repository
 2. Run the `setup.sh` script to download, patch and install the needed
-   dependencies. This script will create a new venv.
-3. You can now run the program via `python3 ilias_fuse/filesystem.py`.
+   dependencies. This script will create a new venv
+3. Activate the virtual environment: `. .venv/bin/activate`
+4. You can now run the program via `python3 ilias_fuse/filesystem.py`
 
 
 ## Help page
