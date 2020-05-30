@@ -40,4 +40,4 @@ cd fusetree
 python setup.py install
 cd ..
 
-pip install git+https://github.com/Garmelon/PFERD@master --upgrade
+pip install git+https://github.com/Garmelon/PFERD@v2.1.0 --upgrade
