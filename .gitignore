@@ -4,5 +4,8 @@ fusepy/
 fusetree/
 .mypy_cache/
 PFERD/
+build/
+
+__pycache__/
 
 cookies.txt
