@@ -2,11 +2,14 @@
 A FUSE for ILIAS.
 """
 import argparse
+import io
 import os
 import pwd
+from math import ceil
 from pathlib import Path
 from stat import S_IFDIR, S_IFREG
-from typing import Generator, List
+from tempfile import TemporaryFile
+from typing import IO, List, Optional
 
 import requests
 
@@ -118,17 +121,25 @@ class OwnedFile(fusetree.BlobFile):
         )
 
 
-class IliasHttpFile(fusetree.GeneratorFile):
+class IliasHttpFile(fusetree.BaseFile):
     """
     An ILIAS file you can download.
     """
 
     def __init__(self, info: IliasDownloadInfo, session: requests.Session):
-        super().__init__(generator=self._process, mode=0o555)
+        super().__init__(mode=0o444)
         self.info = info
         self.session = session
+        self.size: Optional[int] = None
 
     async def getattr(self) -> fusetree.Stat:
+        if self.size is None:
+            response = self.session.head(self.info.url())
+            if "Content-Length" in response.headers:
+                self.size = int(response.headers["Content-Length"])
+            else:
+                self.size = 0
+
         return Stat(
             st_mode=S_IFREG | self.mode,
             st_uid=pwd.getpwuid(os.getuid()).pw_uid,
@@ -136,12 +147,49 @@ class IliasHttpFile(fusetree.GeneratorFile):
             st_mtime=self.info.modification_date.timestamp(),
             st_ctime=self.info.modification_date.timestamp(),
             st_atime=self.info.modification_date.timestamp(),
+            st_size=self.size,
+            st_blksize=512,
+            st_blocks=ceil(self.size / 512)
         )
 
-    def _process(self) -> Generator[bytes, None, None]:
+    async def open(self, mode: int) -> fusetree.FileHandle:
         response = self.session.get(self.info.url(), stream=True)
-        for chunk in response.iter_content(chunk_size=128):
-            yield chunk
+
+        return IliasHttpFile.Handle(self, response)
+
+    class Handle(fusetree.FileHandle):
+        """
+        A handle for an Ilias HTTP file.
+        """
+
+        def __init__(self, node: fusetree.Node, response: requests.Response) -> None:
+            super().__init__(node, direct_io=True, nonseekable=False)
+            self.temp_file: IO[bytes] = TemporaryFile()
+            self.read_bytes = 0
+            self.response_data = response.iter_content(chunk_size=128)
+            self.read_all = False
+
+        async def read(self, size: int, offset: int) -> bytes:
+            if size + offset >= self.read_bytes:
+                self._read_until(size + offset)
+
+            self.temp_file.seek(offset)
+            read = self.temp_file.read(size)
+            return read
+
+        def _read_until(self, position: int) -> None:
+            while self.read_bytes <= position and not self.read_all:
+                try:
+                    read_bytes: bytes = self.response_data.__next__()
+                    self.read_bytes += len(read_bytes)
+                    self.temp_file.seek(0, io.SEEK_END)
+                    self.temp_file.write(read_bytes)
+                except StopIteration:
+                    self.read_all = True
+
+        async def release(self) -> None:
+            # Delete the temp file
+            self.temp_file.close()
 
 
 def main() -> None:
